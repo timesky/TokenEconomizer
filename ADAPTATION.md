@@ -80,6 +80,7 @@ git push origin codebuddy-v0.2.0+te-<新短SHA>
 |---|---|---|---|---|
 | `codebuddy-v0.1.0+te-1bfeccd` | 2026-11-20 | `1bfeccdcecf48333b22762ad1dd9e36c6dc065df` | `v0.1.0`（`ec8ff5e`，落后基准 369 commits） | 建立分支隔离、同步脚本与 tag 追踪框架；尚无插件代码改动 |
 | `codebuddy-v0.2.0+te-1bfeccd` | 2026-11-20 | `1bfeccdcecf48333b22762ad1dd9e36c6dc065df` | 同上 | 新增 CodeBuddy CLI 宿主适配：shim 运行时注入（零改原库）、transcript 解析器、成本映射、插件清单/hooks、离线单测 |
+| `codebuddy-v0.3.0+te-1bfeccd` | 2026-11-20 | `1bfeccdcecf48333b22762ad1dd9e36c6dc065df` | 同上 | 实现无感安装：新增根级 marketplace 清单、manifest 的 `hooks` 路由、bootstrap 从回溯 clone 定位 shim；附 QUICKSTART.md。修复"装上也不走 shim"的隐藏缺陷 |
 
 > 上游目前仅有一个正式 tag `v0.1.0`（2026-10-26），之后 369 个提交未再打 tag。因此"对应原版版本"以 commit SHA 为准，tag 名仅作辅助参考。
 
@@ -99,6 +100,20 @@ git push origin codebuddy-v0.2.0+te-<新短SHA>
 **已验证事实**（见 `tests/test_codebuddy_adapter.py`，9 项全过）：宿主注册/检测、Claude Code 回退不受影响、transcript→trace 形状转换、上游 `load_trajectory` 兼容、失败结果标记、usage 字段映射与去重、prompt 计数排除 tool_result、CLI `--host codebuddy`。原库核心回归测试 213 项零回归。端到端 payload 经完整 hook 链无异常（fail-open 契约保持）。
 
 **已知边界**：`codebuddy/host.py` 中会话 ID 与 cwd 取自 hook payload；`history()` 读取 `~/.codebuddy/projects`（或 `CODEBUDDY_CONFIG_DIR`）。端到端安装到本机 CodeBuddy CLI 未在本轮执行（按约定只做离线单测 + 真实 transcript 回放）。
+
+## 无感安装机制（v0.3.0）
+
+安装流程见 [`QUICKSTART.md`](QUICKSTART.md)，与原版同构：克隆 → `plugin marketplace add` → `plugin add`。三处关键设计使适配在无人工干预下生效：
+
+| 环节 | 实现 | 依据 |
+|---|---|---|
+| 市场入口 | 新增根级 `.codebuddy-plugin/marketplace.json`（市场名 `tokeneconomizer-codebuddy`，源 `./plugin`） | 实测 `codebuddy plugin marketplace add "$PWD"` 成功识别该清单 |
+| hooks 路由 | `plugin/.codebuddy-plugin/plugin.json` 增加 `"hooks": "./hooks/codebuddy-hooks.json"` | CodeBuddy 二进制支持 manifest 的 `hooks` 字段（path/object/array），按 `join(plugin_root, path)` 解析；原版 cursor/codex/copilot 均用此模式 |
+| 复制安装后定位 shim | `codebuddy_bootstrap._addon_root(core)` 优先从 core（回溯到的 clone 根）定位 `codebuddy/` 包 | CodeBuddy 只复制 `plugin/` 到 `cache/<market>/<plugin>/<ver>`，shim 不随复制；原版 `_marketplace_sources()` 从 `known_marketplaces.json` 回溯到 clone |
+
+**代价**：克隆必须原位保留（与原版 "leave it in place" 要求一致）——核心库与 shim 都从它定位。
+
+**验证**（临时 HOME + 真实 cache 层级模拟）：`marketplace add` 真实执行成功；模拟复制安装后 core 回溯到 clone、shim 可发现、宿主注册成功；SessionStart payload 经完整 hook 链 exit 0、输出 `{}`、无 errors.log。受限网络下 `plugin add` 会因 CLI 内部配置拉取失败（`fetch config failed` / `No mapping found`）而不可用，属 CLI 环境问题，与插件无关。
 
 ### 上游同步后的适配维护
 

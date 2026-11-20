@@ -18,8 +18,24 @@ def _plugin_root():
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def _addon_root():
-    # scripts/codebuddy_bootstrap.py -> repository/plugin parent holds the codebuddy package
+def _addon_root(core=None):
+    """Find the directory that holds the `codebuddy` shim package.
+
+    CodeBuddy marketplace installs copy only `plugin/` into
+    ~/.codebuddy/plugins/cache/<market>/<plugin>/<version>, so the clone-root
+    `codebuddy/` package is not copied alongside. The upstream core_path() still
+    resolves to the original clone (via known_marketplaces.json), and that clone
+    holds the shim, so prefer `core` when it is available. Fall back to the
+    plugin's parent (direct clone) and then to the plugin dir itself.
+    """
+    seen = []
+    for cand in (core, os.path.dirname(_plugin_root()), _plugin_root()):
+        if cand and cand not in seen:
+            seen.append(cand)
+    for cand in seen:
+        if os.path.isfile(os.path.join(cand, "codebuddy", "shim.py")):
+            return cand
+    # Nothing matched: keep the historical default so callers still behave.
     return os.path.dirname(_plugin_root())
 
 
@@ -56,8 +72,9 @@ def main():
     core = _core_path()
     if core:
         sys.path.insert(0, core)
-    if _addon_root() not in sys.path:
-        sys.path.insert(0, _addon_root())
+    addon_root = _addon_root(core)
+    if addon_root not in sys.path:
+        sys.path.insert(0, addon_root)
 
     try:
         from codebuddy.shim import install

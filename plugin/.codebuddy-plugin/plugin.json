@@ -9,6 +9,7 @@
   "repository": "https://github.com/timesky/TokenEconomizer",
   "license": "MIT",
   "commands": "../slash-commands/",
+  "hooks": "./hooks/codebuddy-hooks.json",
   "keywords": [
     "codebuddy",
     "cost",

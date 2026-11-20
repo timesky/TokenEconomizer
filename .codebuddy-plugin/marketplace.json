@@ -1,0 +1,15 @@
+{
+  "name": "tokeneconomizer-codebuddy",
+  "description": "TokenEconomizer CodeBuddy CLI adaptation (clone of microsoft/TokenEconomizer).",
+  "owner": {
+    "name": "timesky (adaptation); TokenEconomizer authors (upstream)"
+  },
+  "plugins": [
+    {
+      "name": "tokeneconomizer-codebuddy",
+      "source": "./plugin",
+      "description": "CodeBuddy CLI adaptation of TokenEconomizer: micro-skills and a failure-loop guard, namespaced under the codebuddy host.",
+      "version": "0.2.0"
+    }
+  ]
+}
