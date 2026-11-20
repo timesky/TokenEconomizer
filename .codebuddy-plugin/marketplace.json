@@ -9,7 +9,7 @@
       "name": "tokeneconomizer-codebuddy",
       "source": "./plugin",
       "description": "CodeBuddy CLI adaptation of TokenEconomizer: micro-skills and a failure-loop guard, namespaced under the codebuddy host.",
-      "version": "0.2.0"
+      "version": "0.3.1"
     }
   ]
 }

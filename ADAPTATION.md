@@ -81,6 +81,7 @@ git push origin codebuddy-v0.2.0+te-<新短SHA>
 | `codebuddy-v0.1.0+te-1bfeccd` | 2026-11-20 | `1bfeccdcecf48333b22762ad1dd9e36c6dc065df` | `v0.1.0`（`ec8ff5e`，落后基准 369 commits） | 建立分支隔离、同步脚本与 tag 追踪框架；尚无插件代码改动 |
 | `codebuddy-v0.2.0+te-1bfeccd` | 2026-11-20 | `1bfeccdcecf48333b22762ad1dd9e36c6dc065df` | 同上 | 新增 CodeBuddy CLI 宿主适配：shim 运行时注入（零改原库）、transcript 解析器、成本映射、插件清单/hooks、离线单测 |
 | `codebuddy-v0.3.0+te-1bfeccd` | 2026-11-20 | `1bfeccdcecf48333b22762ad1dd9e36c6dc065df` | 同上 | 实现无感安装：新增根级 marketplace 清单、manifest 的 `hooks` 路由、bootstrap 从回溯 clone 定位 shim；附 QUICKSTART.md。修复"装上也不走 shim"的隐藏缺陷 |
+| `codebuddy-v0.3.1+te-1bfeccd` | 2026-11-20 | `1bfeccdcecf48333b22762ad1dd9e36c6dc065df` | 同上 | 真实安装修复：CodeBuddy 把 lib symlink 复制成实体目录致 core 落在 cache 内，_addon_root 增加 marketplace source 回溯以定位 shim。**本机已真实安装并验证** |
 
 > 上游目前仅有一个正式 tag `v0.1.0`（2026-10-26），之后 369 个提交未再打 tag。因此"对应原版版本"以 commit SHA 为准，tag 名仅作辅助参考。
 

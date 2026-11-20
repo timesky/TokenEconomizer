@@ -1,7 +1,7 @@
 {
   "name": "tokeneconomizer-codebuddy",
   "displayName": "TokenEconomizer (CodeBuddy CLI)",
-  "version": "0.2.0",
+  "version": "0.3.1",
   "description": "CodeBuddy CLI adaptation of TokenEconomizer: micro-skills (short repository facts learned from earlier sessions) injected at session start, and a guard that redirects a turn stuck in a failing loop. Tool pruning is not enabled on this host (no verified deny-rule interface). All learned state is namespaced under the codebuddy host, isolated from Claude Code.",
   "author": {
     "name": "TokenEconomizer authors; CodeBuddy adaptation by timesky"
