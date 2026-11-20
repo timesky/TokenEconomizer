@@ -79,5 +79,27 @@ git push origin codebuddy-v0.2.0+te-<新短SHA>
 | 适配 Tag | 日期 | 基准上游 commit | 上游 tag | 改动摘要 |
 |---|---|---|---|---|
 | `codebuddy-v0.1.0+te-1bfeccd` | 2026-11-20 | `1bfeccdcecf48333b22762ad1dd9e36c6dc065df` | `v0.1.0`（`ec8ff5e`，落后基准 369 commits） | 建立分支隔离、同步脚本与 tag 追踪框架；尚无插件代码改动 |
+| `codebuddy-v0.2.0+te-1bfeccd` | 2026-11-20 | `1bfeccdcecf48333b22762ad1dd9e36c6dc065df` | 同上 | 新增 CodeBuddy CLI 宿主适配：shim 运行时注入（零改原库）、transcript 解析器、成本映射、插件清单/hooks、离线单测 |
 
 > 上游目前仅有一个正式 tag `v0.1.0`（2026-10-26），之后 369 个提交未再打 tag。因此"对应原版版本"以 commit SHA 为准，tag 名仅作辅助参考。
+
+## CodeBuddy 适配架构（v0.2.0）
+
+**注入路线**：纯 shim 注入，`tokeneconomizer/` 原库文件零改动。`codebuddy/shim.py::install()` 在启动时向原库内存注册表注入宿主类、检测规则、env 白名单与标签；`plugin/scripts/codebuddy_bootstrap.py` 先注入再调用原 `hook.main`/`cli.main`。上游 `git pull` 不会与适配文件冲突。
+
+**机制范围**：
+
+| 机制 | 状态 | 依据 |
+|---|---|---|
+| Micro-skills（跨会话学习） | 启用 | SessionStart / UserPromptSubmit 的 `additionalContext` 已验证到达模型；会话可转成 Claude-shaped trace 供机制层 fold |
+| Loop guard（失败循环干预） | 启用 | 依赖 prompt_context 与 prompt-turn 判定，均已适配 |
+| 成本统计 | 启用 | `rawUsage` 映射：cache 读优先取 `prompt_cache_hit_tokens`（Anthropic 名字段是 0 占位），input 取 `prompt_cache_miss_tokens`；非 Anthropic 模型走 fallback 计价 |
+| Tool pruning（工具裁剪） | **关闭** | CodeBuddy settings 的 deny 规则接口未经实测，按边界纪律不写入用户配置；与 Cursor/Grok/Antigravity 的实验性支持一致 |
+
+**已验证事实**（见 `tests/test_codebuddy_adapter.py`，9 项全过）：宿主注册/检测、Claude Code 回退不受影响、transcript→trace 形状转换、上游 `load_trajectory` 兼容、失败结果标记、usage 字段映射与去重、prompt 计数排除 tool_result、CLI `--host codebuddy`。原库核心回归测试 213 项零回归。端到端 payload 经完整 hook 链无异常（fail-open 契约保持）。
+
+**已知边界**：`codebuddy/host.py` 中会话 ID 与 cwd 取自 hook payload；`history()` 读取 `~/.codebuddy/projects`（或 `CODEBUDDY_CONFIG_DIR`）。端到端安装到本机 CodeBuddy CLI 未在本轮执行（按约定只做离线单测 + 真实 transcript 回放）。
+
+### 上游同步后的适配维护
+
+原库文件零改动 ⇒ `git merge upstream/main` 通常无冲突。需人工复核的注入点集中在 `codebuddy/shim.py` 引用的原库符号：`hosts.HOSTS`、`hosts.detect`、`hosts.default_host`、`config._ENV`、`history.HOST_LABEL`。上游若改名，install() 会降级记入 `codebuddy.shim.warnings()` 而非抛错；升级时应检查该列表。
