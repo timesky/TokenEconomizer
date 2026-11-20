@@ -47,6 +47,22 @@ print("codebuddy registered:", "codebuddy" in hosts.HOSTS)
 
 输出 `codebuddy registered: True` 即注入生效。
 
+## 斜杠命令
+
+装好后重启 CodeBuddy，命令面板应出现以下 7 个命令（带 `tokeneconomizer:` 命名空间，不与内置命令冲突）：
+
+| 命令 | 作用 |
+|---|---|
+| `/tokeneconomizer:status` | 本仓库已学到的内容、机制状态与开销 |
+| `/tokeneconomizer:microskills` | 会话开始时注入的仓库事实（micro-skills） |
+| `/tokeneconomizer:facts` | 上者的旧名，向后兼容 |
+| `/tokeneconomizer:config` | 查看/修改各机制开关与阈值，如 `set microskills=on` |
+| `/tokeneconomizer:repos` | 列出所有已记录状态的仓库，`migrate` 可迁移旧键 |
+| `/tokeneconomizer:toolprune` | 工具裁剪（CodeBuddy 上返回"不可用"，属预期） |
+| `/tokeneconomizer:untool` | 上者的旧名，向后兼容 |
+
+命令位于插件的 `codebuddy-commands/tokeneconomizer/` 子目录，由 manifest 的 `commands` 字段指向；CodeBuddy 按 `子目录:文件名` 生成命令名。目录不叫 `commands/` 是因为后者是原库给 Codex 保留的（会被当成 skills 重复加载）。命令体用 `!` 内联执行，调用 `te-codebuddy --host codebuddy`，与各宿主状态隔离。若重启后命令未出现，检查 `~/.codebuddy/plugins/cache/.../<版本>/codebuddy-commands/tokeneconomizer/` 是否存在——手动同步时从克隆的 `plugin/codebuddy-commands/` 复制即可。
+
 ## 与原版安装对照
 
 | 步骤 | 原版（Claude Code） | 本适配（CodeBuddy CLI） |
