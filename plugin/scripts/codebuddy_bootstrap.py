@@ -32,6 +32,17 @@ def _addon_root(core=None):
     for cand in (core, os.path.dirname(_plugin_root()), _plugin_root()):
         if cand and cand not in seen:
             seen.append(cand)
+    # CodeBuddy copies the lib symlink as a real directory, so core often resolves
+    # inside the cache and no longer points at the clone. Recover the clone from
+    # the marketplace source recorded by CodeBuddy (same source the upstream core
+    # discovery uses) and include it as a candidate for the shim package.
+    try:
+        import te_bootstrap
+        for cand in te_bootstrap._marketplace_sources(_plugin_root()):
+            if cand and cand not in seen:
+                seen.append(cand)
+    except (ImportError, AttributeError):
+        pass
     for cand in seen:
         if os.path.isfile(os.path.join(cand, "codebuddy", "shim.py")):
             return cand
